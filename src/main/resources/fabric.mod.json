@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "mmplayer",
+  "version": "${version}",
+  "name": "zabyt's music player",
+  "description": "A music player for every track in vanilla Minecraft. Press M to open.",
+  "authors": [
+    "zabyt"
+  ],
+  "contact": {},
+  "license": "MIT",
+  "environment": "client",
+  "icon": "assets/mmplayer/icon.png",
+  "entrypoints": {
+    "client": [
+      "com.example.mmplayer.MMPlayerClient"
+    ],
+    "modmenu": [
+      "com.example.mmplayer.MMPlayerModMenu"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "minecraft": "~26.2",
+    "java": ">=25",
+    "fabric-api": "*",
+    "zabytlib": "*"
+  }
+}
