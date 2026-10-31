@@ -22,7 +22,8 @@ public final class MusicPlayer {
         minecraft.getMusicManager().stopPlaying();
         stopCurrent(sounds);
 
-        DirectSoundInstance instance = new DirectSoundInstance(fileId, isStreamed(fileId));
+        DirectSoundInstance instance = new DirectSoundInstance(fileId, isStreamed(fileId),
+                MMPlayerConfig.get().volumeScalar());
         SoundEngine.PlayResult result = sounds.play(instance);
         if (result != SoundEngine.PlayResult.NOT_STARTED) {
             current = instance;

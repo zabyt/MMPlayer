@@ -14,7 +14,12 @@ A client-side Fabric mod for Minecraft 26.2 that turns the whole vanilla soundtr
 - Currently playing track is highlighted and shown in a "Now playing" bar
 - Plays through the vanilla sound engine in the music category, so the music volume slider still works, and any vanilla song playing is stopped first so tracks never overlap
 - Music keeps playing when you leave the menu, like a real player
-- Track list is read from the game's own sounds.json at runtime, so song names and new tracks stay correct
+- Own music volume slider in the settings, independent from the vanilla music level
+- Track list is based on the game's own sounds.json data and is baked into the mod jar, so song names and tracks stay correct on every setup
+
+## Configuration
+
+In-game settings volume slider is available through [ModMenu](https://modrinth.com/mod/modmenu), or through the icon added by [ZabytLib](https://github.com/zabyt/ZabytLib) on the title/pause screen.
 
 ## Building
 

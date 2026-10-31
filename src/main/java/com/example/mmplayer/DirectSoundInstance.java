@@ -14,10 +14,11 @@ public class DirectSoundInstance extends AbstractSoundInstance {
 
     private final WeighedSoundEvents events;
 
-    public DirectSoundInstance(Identifier fileId, boolean stream) {
+    public DirectSoundInstance(Identifier fileId, boolean stream, float volumeScalar) {
         super(fileId, SoundSource.MUSIC, SoundInstance.createUnseededRandom());
         this.attenuation = SoundInstance.Attenuation.NONE;
         this.relative = true;
+        this.volume = volumeScalar;
         Sound sound = new Sound(fileId, ConstantFloat.of(1.0f), ConstantFloat.of(1.0f), 1,
                 Sound.Type.FILE, stream, false, 16);
         this.events = new WeighedSoundEvents(fileId, null);
