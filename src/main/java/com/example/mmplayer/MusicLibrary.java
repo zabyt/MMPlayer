@@ -1,5 +1,6 @@
 package com.example.mmplayer;
 
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -48,6 +49,49 @@ public final class MusicLibrary {
 
     private static List<Track> build(Minecraft minecraft) {
         Map<Identifier, Track> byFile = new LinkedHashMap<>();
+        byFile.putAll(bakedTracks());
+        if (byFile.isEmpty()) {
+            MMPlayerClient.LOGGER.warn("Baked track list missing, falling back to vanilla sounds.json");
+            byFile.putAll(vanillaTracks(minecraft));
+        }
+        List<Track> tracks = new ArrayList<>(byFile.values());
+        tracks.sort((a, b) -> {
+            int ca = categoryId(a.category());
+            int cb = categoryId(b.category());
+            return ca != cb ? Integer.compare(ca, cb)
+                    : a.title().compareToIgnoreCase(b.title());
+        });
+        return List.copyOf(tracks);
+    }
+
+    private static Map<Identifier, Track> bakedTracks() {
+        try (InputStream in = MusicLibrary.class.getResourceAsStream("/assets/mmplayer/music_tracks.json")) {
+            if (in == null) {
+                return Map.of();
+            }
+            JsonArray root = JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonArray();
+            Map<Identifier, Track> byFile = new LinkedHashMap<>();
+            for (JsonElement element : root) {
+                JsonObject obj = element.getAsJsonObject();
+                Identifier fileId = Identifier.withDefaultNamespace(obj.get("file").getAsString());
+                boolean stream = obj.has("stream") && obj.get("stream").getAsBoolean();
+                String name = obj.has("name") && obj.get("name").isJsonPrimitive()
+                        ? obj.get("name").getAsString().trim()
+                        : "";
+                if (byFile.containsKey(fileId)) {
+                    continue;
+                }
+                byFile.put(fileId, makeTrack(fileId, stream, name));
+            }
+            return byFile;
+        } catch (Exception e) {
+            MMPlayerClient.LOGGER.error("Could not read the baked music list", e);
+            return Map.of();
+        }
+    }
+
+    private static Map<Identifier, Track> vanillaTracks(Minecraft minecraft) {
+        Map<Identifier, Track> byFile = new LinkedHashMap<>();
         try {
             Resource resource = minecraft.getResourceManager().getResourceOrThrow(
                     Identifier.withDefaultNamespace("sounds.json"));
@@ -92,24 +136,17 @@ public final class MusicLibrary {
                         if (byFile.containsKey(fileId)) {
                             continue;
                         }
-                        byFile.put(fileId, makeTrack(fileId, stream));
+                        byFile.put(fileId, makeTrack(fileId, stream, ""));
                     }
                 }
             }
         } catch (Exception e) {
             MMPlayerClient.LOGGER.error("Could not read vanilla music list", e);
         }
-        List<Track> tracks = new ArrayList<>(byFile.values());
-        tracks.sort((a, b) -> {
-            int ca = categoryId(a.category());
-            int cb = categoryId(b.category());
-            return ca != cb ? Integer.compare(ca, cb)
-                    : a.title().compareToIgnoreCase(b.title());
-        });
-        return List.copyOf(tracks);
+        return byFile;
     }
 
-    private static Track makeTrack(Identifier fileId, boolean stream) {
+    private static Track makeTrack(Identifier fileId, boolean stream, String bakedName) {
         String path = fileId.getPath();
         if (path.startsWith("records/")) {
             String raw = path.substring("records/".length());
@@ -117,6 +154,14 @@ public final class MusicLibrary {
                     : titleCase(raw.replace('_', ' '));
             String artist = DISC_ARTISTS.getOrDefault(raw, "Unknown Artist");
             return new Track(fileId, title, artist, "Music Disc", stream);
+        }
+        if (bakedName != null && !bakedName.isEmpty()) {
+            int split = bakedName.indexOf(" - ");
+            if (split > 0) {
+                return new Track(fileId, bakedName.substring(split + 3), bakedName.substring(0, split),
+                        categoryOf(path), stream);
+            }
+            return new Track(fileId, bakedName, "", categoryOf(path), stream);
         }
         String key = fileId.toShortLanguageKey();
         String translated = Component.translatable(key).getString();
